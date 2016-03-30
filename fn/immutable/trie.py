@@ -1,12 +1,13 @@
 from fn import Stream
-from fn.uniform import reduce
 from fn.iters import takewhile
+from fn.uniform import reduce
+
 
 class Vector(object):
     """A vector is a collection of values indexed by contiguous integers.
-    Based on Philip Bagwell's "Array Mapped Trie" and Rick Hickey's 
+    Based on Philip Bagwell's "Array Mapped Trie" and Rick Hickey's
     "Bitmapped Vector Trie". As well as Clojure variant it supports access
-    to items by index in log32N hops. 
+    to items by index in log32N hops.
 
     Code structure inspired much by PersistenVector.java (Clojure core):
     [1] http://goo.gl/sqtZ74
@@ -37,15 +38,20 @@ class Vector(object):
 
         def __init__(self, values=None, init=None):
             self.array = values or [None]*32
-            if init is not None: self.array[0] = init
+            if init is not None:
+                self.array[0] = init
 
         def __str__(self):
             return str(self.array)
 
         def __iter__(self):
-            s = reduce(lambda acc, el: acc << (el if isinstance(el, self.__class__) else [el]),
-                       takewhile(lambda el: el is not None, self.array),
-                       Stream())
+            s = reduce(
+                lambda acc, el: acc << (
+                    el if isinstance(el, self.__class__) else [el]
+                ),
+                takewhile(lambda el: el is not None, self.array),
+                Stream()
+            )
             return iter(s)
 
     def __init__(self, length=0, shift=None, root=None, tail=None):
@@ -58,18 +64,21 @@ class Vector(object):
         """Returns a new vector that contains el at given position.
         Note, that position must be <= len(vector)
         """
-        if pos < 0 or pos > self.length: raise IndexError()
-        if pos == self.length: return self.cons(el)
+        if pos < 0 or pos > self.length:
+            raise IndexError()
+        if pos == self.length:
+            return self.cons(el)
         if pos < self._tailoff():
             up = self.__class__._do_assoc(self.shift, self.root, pos, el)
             return self.__class__(self.length, self.shift, up, self.tail)
 
         up = self.tail[:]
-        up[pos & 0x01f] = el;
+        up[pos & 0x01f] = el
         return self.__class__(self.length, self.shift, self.root, up)
 
     def _tailoff(self):
-        if self.length < 32: return 0
+        if self.length < 32:
+            return 0
         return ((self.length - 1) >> 5) << 5
 
     @classmethod
@@ -119,25 +128,32 @@ class Vector(object):
 
     @classmethod
     def _make_path(cls, level, node):
-        if level == 0: return node
+        if level == 0:
+            return node
         return cls._Node(init=cls._make_path(level-5, node))
 
     def get(self, pos):
         """Returns a value accossiated with position"""
-        if pos < 0 or pos >= self.length: raise IndexError()
+        if pos < 0 or pos >= self.length:
+            raise IndexError()
         return self._find_container(pos)[pos & 0x01f]
 
     def peek(self):
         """Returns the last item in vector or None if vector is empty"""
-        if self.length == 0: return None
+        if self.length == 0:
+            return None
         return self.get(self.length-1)
 
     def pop(self):
         """Returns a new vector without the last item"""
-        if self.length == 0: raise ValueError("Vector is empty")
-        if self.length == 1: return self.__class__()
+        if self.length == 0:
+            raise ValueError("Vector is empty")
+        if self.length == 1:
+            return self.__class__()
         if self.length - self._tailoff() > 1:
-            return self.__class__(self.length-1, self.shift, self.root, self.tail[:-1])
+            return self.__class__(
+                self.length-1, self.shift, self.root, self.tail[:-1]
+            )
 
         tail = self._find_container(self.length - 2)
         root = self._pop_tail(self.shift, self.root) or self.__class__._Node()
@@ -150,26 +166,30 @@ class Vector(object):
         return self.__class__(self.length-1, shift, root, tail)
 
     def _find_container(self, pos):
-        if pos < 0 or pos > self.length: raise IndexError()
-        if pos >= self._tailoff(): return self.tail
+        if pos < 0 or pos > self.length:
+            raise IndexError()
+        if pos >= self._tailoff():
+            return self.tail
         bottom = reduce(lambda node, level: node.array[(pos >> level) & 0x01f],
-                        range(self.shift,0,-5), self.root)
+                        range(self.shift, 0, -5), self.root)
         return bottom.array
 
     def _pop_tail(self, level, node):
         sub = ((self.length - 2) >> level) & 0x01f
         if level > 5:
             child = self._pop_tail(level-5, node.array[sub])
-            if child is None and sub == 0: return None
+            if child is None and sub == 0:
+                return None
             r = self.__class__._Node(node.array[:])
             r.array[sub] = child
             return r
-        elif sub == 0: return None
+        elif sub == 0:
+            return None
         else:
             r = self.__class__._Node(node.array[:])
             r.array[sub] = None
             return r
-    
+
     def subvec(self, start, end=None):
         """Returns a new vector of the items in vector from start to end"""
         pass

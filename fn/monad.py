@@ -1,10 +1,10 @@
 """
-``fn.monad.Option`` represents optional values, each instance of 
-``Option`` can be either instance of ``Full`` or ``Empty``. 
-It provides you with simple way to write long computation sequences 
-and get rid of many ``if/else`` blocks. See usage examples below. 
+``fn.monad.Option`` represents optional values, each instance of
+``Option`` can be either instance of ``Full`` or ``Empty``.
+It provides you with simple way to write long computation sequences
+and get rid of many ``if/else`` blocks. See usage examples below.
 
-Assume that you have ``Request`` class that gives you parameter 
+Assume that you have ``Request`` class that gives you parameter
 value by its name. To get uppercase notation for non-empty striped value:
 
     class Request(dict):
@@ -40,9 +40,9 @@ Hmm, looks ugly.. Update code with ``fn.monad.Option``:
              .map(methodcaller("upper"))
              .get_or("")
 
-``fn.monad.Option.or_call`` is good method for trying several 
-variant to end computation. I.e. use have ``Request`` class 
-with optional attributes ``type``, ``mimetype``, ``url``. 
+``fn.monad.Option.or_call`` is good method for trying several
+variant to end computation. I.e. use have ``Request`` class
+with optional attributes ``type``, ``mimetype``, ``url``.
 You need to evaluate "request type" using at least on attribute:
 
     from fn.monad import Option
@@ -56,8 +56,9 @@ You need to evaluate "request type" using at least on attribute:
 
 """
 
-from functools import wraps, partial
+from functools import partial, wraps
 from operator import eq, is_not
+
 
 class Option(object):
 
@@ -80,7 +81,7 @@ class Option(object):
         """
         exc = kwargs.pop("exc", Exception)
         try:
-            return Option(callback(*args, **kwargs)) 
+            return Option(callback(*args, **kwargs))
         except exc:
             return Empty()
 
@@ -102,17 +103,18 @@ class Option(object):
     def or_call(self, callback, *args, **kwargs):
         raise NotImplementedError()
 
+
 class Full(Option):
     """Represents value that is ready for further computations"""
 
-    __slots__ = "x", 
-    empty = False 
+    __slots__ = "x",
+    empty = False
 
     def __new__(tp, value, *args, **kwargs):
         # Full(Empty) -> Full
         if isinstance(value, Empty):
             return Empty()
-        return object.__new__(tp) 
+        return object.__new__(tp)
 
     def __init__(self, value, *args):
         # Option(Full) -> Full
@@ -184,9 +186,10 @@ class Empty(Option):
     def __eq__(self, other):
         return isinstance(other, Empty)
 
+
 def optionable(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         return Option(f(*args, **kwargs))
-    
+
     return wrapper

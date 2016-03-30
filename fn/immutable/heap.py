@@ -1,7 +1,10 @@
 from functools import partial
+
 from fn.op import identity
 
-default_cmp = (lambda a,b: -1 if (a < b) else 1)
+
+default_cmp = (lambda a, b: -1 if (a < b) else 1)
+
 
 class _MergeBased(object):
 
@@ -21,10 +24,14 @@ class _MergeBased(object):
             yield r
 
     def __lt__(self, other):
-        if (not self) and (not other): return False
-        if not self: return True
-        if not other: return False
+        if (not self) and (not other):
+            return False
+        if not self:
+            return True
+        if not other:
+            return False
         return self.cmpfn(self.keyfn(self.root), self.keyfn(other.root)) < 0
+
 
 class SkewHeap(_MergeBased):
     """A skew heap (or self-adjusting heap) is a heap data structure
@@ -71,7 +78,9 @@ class SkewHeap(_MergeBased):
         self.right = right
         self.keyfn = key or identity
         self.cmpfn = cmp or default_cmp
-        self._make_heap = partial(self.__class__, key=self.keyfn, cmp=self.cmpfn)        
+        self._make_heap = partial(
+            self.__class__, key=self.keyfn, cmp=self.cmpfn
+        )
 
     def insert(self, el):
         """Returns new skew heap with additional element"""
@@ -84,29 +93,39 @@ class SkewHeap(_MergeBased):
 
         Or None and empty heap if self is an empty heap.
         """
-        if not self: return None, self._make_heap()
-        return self.root, self.left.union(self.right) if self.left else self._make_heap()
+        if not self:
+            return None, self._make_heap()
+        tmp_heap = self.left.union(self.right)
+        if not self.left:
+            tmp_heap = self._make_heap()
+        return self.root, tmp_heap
 
     def union(self, other):
         """Merge two heaps and returns new one (skew merging)"""
-        if not self: return other
-        if not other: return self
+        if not self:
+            return other
+        if not other:
+            return self
 
         if self < other:
-            return self._make_heap(self.root, other.union(self.right), self.left)
+            return self._make_heap(
+                self.root, other.union(self.right), self.left
+            )
         return self._make_heap(other.root, self.union(other.right), other.left)
+
 
 class PairingHeap(_MergeBased):
     """A pairing heap is either an empty heap, or a pair consisting of a root
-    element and a possibly empty list of pairing heap. The heap ordering property
-    requires that all the root elements of the subheaps in the list are not
-    smaller (bigger) than the root element of the heap.
+    element and a possibly empty list of pairing heap. The heap ordering
+    property requires that all the root elements of the subheaps in the list
+    are not smaller (bigger) than the root element of the heap.
 
     In Haskell type definition it should looks like following:
     data Pairing a = Empty | Node a [Pairing a]
 
-    Pairing heap has and excellent practical amortized performance. The amortized
-    time per extract is less than O(log n), find-min/find-max, merge and insert are O(1).
+    Pairing heap has and excellent practical amortized performance. The
+    amortized time per extract is less than O(log n), find-min/find-max, merge
+    and insert are O(1).
 
     More information about performance bounds you can find here:
     "The Pairing Heap: A New Form of Self-Adjusting Heap"
@@ -138,14 +157,16 @@ class PairingHeap(_MergeBased):
     __slots__ = ("root", "subs", "keyfn", "cmpfn", "_make_heap")
 
     def __init__(self, el=None, subs=None, key=None, cmp=None):
-        """Creates singlton from given element 
+        """Creates singlton from given element
         (pairing heap with one element or empty one)
         """
         self.root = el
         self.subs = subs
         self.keyfn = key or identity
         self.cmpfn = cmp or default_cmp
-        self._make_heap = partial(self.__class__, key=self.keyfn, cmp=self.cmpfn)
+        self._make_heap = partial(
+            self.__class__, key=self.keyfn, cmp=self.cmpfn
+        )
 
     def insert(self, el):
         """Returns new pairing heap with additional element"""
@@ -158,18 +179,21 @@ class PairingHeap(_MergeBased):
 
         Or None and empty heap if self is an empty heap.
         """
-        if not self: return None, self._make_heap()
+        if not self:
+            return None, self._make_heap()
         return self.root, PairingHeap._pairing(self._make_heap, self.subs)
 
     def union(self, other):
         """Returns new heap as a result of merging two given
-        
+
         Note, that originally this operation for pairingi heap was
         named "meld", see [1] and [2]. We use here name "union" to
         follow consistent naming convention for all heap implementations.
-        """ 
-        if not self: return other
-        if not other: return self
+        """
+        if not self:
+            return other
+        if not other:
+            return self
 
         if self < other:
             return self._make_heap(self.root, (other, self.subs))
@@ -177,8 +201,10 @@ class PairingHeap(_MergeBased):
 
     @staticmethod
     def _pairing(heap, hs):
-        if hs is None: return heap()
+        if hs is None:
+            return heap()
         (h1, tail) = hs
-        if tail is None: return h1
+        if tail is None:
+            return h1
         (h2, tail) = tail
         return PairingHeap._pairing(heap, (h1.union(h2), tail))

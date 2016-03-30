@@ -1,31 +1,33 @@
+from itertools import chain
 from sys import version_info
+
+from .iters import map, range
 
 if version_info[0] == 2:
     from sys import maxint
 else:
     from sys import maxsize as maxint
 
-from itertools import chain
-from .iters import map, range
 
 class Stream(object):
 
     __slots__ = ("_last", "_collection", "_origin")
 
     class _StreamIterator(object):
-        
+
         __slots__ = ("_stream", "_position")
 
         def __init__(self, stream):
             self._stream = stream
-            self._position = -1 # not started yet
+            self._position = - 1  # not started yet
 
         def __next__(self):
             # check if elements are available for next position
             # return next element or raise StopIteration
             self._position += 1
-            if (len(self._stream._collection) > self._position or 
-                self._stream._fill_to(self._position)):
+
+            col_pos = len(self._stream._collection) > self._position
+            if col_pos or self._stream._fill_to(self._position):
                 return self._stream._collection[self._position]
 
             raise StopIteration()
@@ -35,7 +37,7 @@ class Stream(object):
 
     def __init__(self, *origin):
         self._collection = []
-        self._last = -1 # not started yet
+        self._last = - 1  # not started yet
         self._origin = iter(origin) if origin else []
 
     def __lshift__(self, rvalue):
@@ -68,12 +70,16 @@ class Stream(object):
     def __getitem__(self, index):
         if isinstance(index, int):
             # todo: i'm not sure what to do with negative indices
-            if index < 0: raise TypeError("Invalid argument type")
+            if index < 0:
+                raise TypeError("Invalid argument type")
             self._fill_to(index)
         elif isinstance(index, slice):
             low, high, step = index.indices(maxint)
-            if step == 0: raise ValueError("Step must not be 0")
-            return self.__class__() << map(self.__getitem__, range(low, high, step or 1))
+            if step == 0:
+                raise ValueError("Step must not be 0")
+            return self.__class__() << map(
+                self.__getitem__, range(low, high, step or 1)
+            )
         else:
             raise TypeError("Invalid argument type")
 

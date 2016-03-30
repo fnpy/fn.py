@@ -1,49 +1,61 @@
-import re
 import operator
-import string
 import random
-
+import re
+import string
+from itertools import count, repeat
 from sys import version_info
-from itertools import repeat, count
 
-from .op import identity, apply, flip
-from .uniform import map, zip
 from .func import F
+from .op import apply, flip, identity
+from .uniform import map, zip
 
 div = operator.div if version_info[0] == 2 else operator.truediv
 
 letters = string.letters if version_info[0] == 2 else string.ascii_letters
 
+
 def _random_name():
     return "".join(random.choice(letters) for _ in range(14))
+
 
 def fmap(f, format):
     def applyier(self, other):
         fmt = "(%s)" % format.replace("self", self._format)
 
         if isinstance(other, self.__class__):
-            return self.__class__((f, self, other),
-                                  fmt.replace("other", other._format),
-                                  dict(list(self._format_args.items()) + list(other._format_args.items())),
-                                  self._arity + other._arity)
+            return self.__class__(
+                (f, self, other),
+                fmt.replace("other", other._format),
+                dict(
+                    list(self._format_args.items()) +
+                    list(other._format_args.items())
+                ),
+                self._arity + other._arity
+            )
         else:
             call = F(flip(f), other) << F(self)
             name = _random_name()
-            return self.__class__(call,
-                                  fmt.replace("other", "%%(%s)r" % name),
-                                  dict(list(self._format_args.items()) + [(name, other)]),
-                                  self._arity)
+            return self.__class__(
+                call,
+                fmt.replace("other", "%%(%s)r" % name),
+                dict(list(self._format_args.items()) + [(name, other)]),
+                self._arity)
     return applyier
+
 
 class ArityError(TypeError):
     def __str__(self):
         return "{0!r} expected {1} arguments, got {2}".format(*self.args)
 
+
 def unary_fmap(f, format):
     def applyier(self):
         fmt = "(%s)" % format.replace("self", self._format)
-        return self.__class__(F(self) << f, fmt, self._format_args, self._arity)
+        return self.__class__(
+            F(self) << f, fmt, self._format_args, self._arity
+        )
     return applyier
+
 
 class _Callable(object):
 
@@ -52,7 +64,8 @@ class _Callable(object):
     # see https://github.com/kachayev/fn.py/issues/23
     __flipback__ = None
 
-    def __init__(self, callback=identity, format="_", format_args=None, arity=1):
+    def __init__(self, callback=identity, format="_", format_args=None,
+                 arity=1):
         self._callback = callback
         self._format = format
         self._format_args = format_args or {}
@@ -60,26 +73,40 @@ class _Callable(object):
 
     def call(self, name, *args, **kwargs):
         """Call method from _ object by given name and arguments"""
-        return self.__class__(F(lambda f: apply(f, args, kwargs)) << operator.attrgetter(name) << F(self))
+        return self.__class__(
+            F(lambda f:
+              apply(f, args, kwargs)) << operator.attrgetter(name) << F(self)
+        )
 
     def __getattr__(self, name):
         attr_name = _random_name()
-        return self.__class__(F(operator.attrgetter(name)) << F(self),
-                              "getattr(%s, %%(%s)r)" % (self._format, attr_name),
-                              dict(list(self._format_args.items()) + [(attr_name,name)]),
-                              self._arity)
+        return self.__class__(
+            F(operator.attrgetter(name)) << F(self),
+            "getattr(%s, %%(%s)r)" % (self._format, attr_name),
+            dict(
+                list(self._format_args.items()) + [(attr_name, name)]
+            ),
+            self._arity
+        )
 
     def __getitem__(self, k):
         if isinstance(k, self.__class__):
-            return self.__class__((operator.getitem, self, k),
-                                  "%s[%s]" % (self._format, k._format),
-                                  dict(list(self._format_args.items()) + list(k._format_args.items())),
-                                  self._arity + k._arity)
+            return self.__class__(
+                (operator.getitem, self, k),
+                "%s[%s]" % (self._format, k._format),
+                dict(
+                    list(self._format_args.items()) +
+                    list(k._format_args.items())
+                ),
+                self._arity + k._arity
+            )
         item_name = _random_name()
-        return self.__class__(F(operator.itemgetter(k)) << F(self),
-                              "%s[%%(%s)r]" % (self._format,item_name),
-                              dict(list(self._format_args.items()) + [(item_name,k)]),
-                              self._arity)
+        return self.__class__(
+            F(operator.itemgetter(k)) << F(self),
+            "%s[%%(%s)r]" % (self._format, item_name),
+            dict(list(self._format_args.items()) + [(item_name, k)]),
+            self._arity
+        )
 
     def __str__(self):
         """Build readable representation for function
@@ -101,7 +128,9 @@ class _Callable(object):
         return "({left}) => {right}".format(left=", ".join(l), right=r)
 
     def __repr__(self):
-        """Return original function notation to ensure that eval(repr(f)) == f"""
+        """
+        Return original function notation to ensure that eval(repr(f)) == f
+        """
         return re.sub(r"x\d+", "_", str(self).split("=>", 1)[1].strip())
 
     def __call__(self, *args):
