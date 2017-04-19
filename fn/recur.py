@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 
+
 class tco(object):
     """Provides a trampoline for functions that need one.
 
@@ -45,6 +46,7 @@ class tco(object):
             if callable(act):
                 action = act
             kwargs = result[2] if len(result) > 2 else {}
+
 
 class stackless(object):
     """Provides a "stackless" (constant Python stack space) recursion
