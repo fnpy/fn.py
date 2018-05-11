@@ -37,7 +37,7 @@ class Vector(object):
         __slots__ = ("array")
 
         def __init__(self, values=None, init=None):
-            self.array = values or [None]*32
+            self.array = values or [None] * 32
             if init is not None:
                 self.array[0] = init
 
@@ -88,7 +88,7 @@ class Vector(object):
             r.array[pos & 0x01f] = el
         else:
             sub = (pos >> level) & 0x01f
-            r.array[sub] = cls._do_assoc(level-5, node.array[sub], pos, el)
+            r.array[sub] = cls._do_assoc(level - 5, node.array[sub], pos, el)
         return r
 
     def cons(self, el):
@@ -96,7 +96,7 @@ class Vector(object):
         if (self.length - self._tailoff()) < 32:
             tailup = self.tail[:]
             tailup.append(el)
-            return self.__class__(self.length+1, self.shift, self.root, tailup)
+            return self.__class__(self.length + 1, self.shift, self.root, tailup)
 
         # if tail is already full, we need to push element into tree
         # (from the top)
@@ -111,7 +111,7 @@ class Vector(object):
             uproot = self._push_tail(self.shift, self.root, tailnode)
             shift = self.shift
 
-        return self.__class__(self.length+1, shift, uproot, [el])
+        return self.__class__(self.length + 1, shift, uproot, [el])
 
     def _push_tail(self, level, root, tail):
         sub = ((self.length - 1) >> level) & 0x01f
@@ -121,16 +121,16 @@ class Vector(object):
         else:
             child = root.array[sub]
             if child is not None:
-                r.array[sub] = self._push_tail(level-5, child, tail)
+                r.array[sub] = self._push_tail(level - 5, child, tail)
             else:
-                r.array[sub] = self.__class__._make_path(level-5, tail)
+                r.array[sub] = self.__class__._make_path(level - 5, tail)
         return r
 
     @classmethod
     def _make_path(cls, level, node):
         if level == 0:
             return node
-        return cls._Node(init=cls._make_path(level-5, node))
+        return cls._Node(init=cls._make_path(level - 5, node))
 
     def get(self, pos):
         """Returns a value accossiated with position"""
@@ -142,7 +142,7 @@ class Vector(object):
         """Returns the last item in vector or None if vector is empty"""
         if self.length == 0:
             return None
-        return self.get(self.length-1)
+        return self.get(self.length - 1)
 
     def pop(self):
         """Returns a new vector without the last item"""
@@ -152,7 +152,7 @@ class Vector(object):
             return self.__class__()
         if self.length - self._tailoff() > 1:
             return self.__class__(
-                self.length-1, self.shift, self.root, self.tail[:-1]
+                self.length - 1, self.shift, self.root, self.tail[:-1]
             )
 
         tail = self._find_container(self.length - 2)
@@ -163,7 +163,7 @@ class Vector(object):
             root = root.array[0]
             shift -= 5
 
-        return self.__class__(self.length-1, shift, root, tail)
+        return self.__class__(self.length - 1, shift, root, tail)
 
     def _find_container(self, pos):
         if pos < 0 or pos > self.length:
@@ -177,7 +177,7 @@ class Vector(object):
     def _pop_tail(self, level, node):
         sub = ((self.length - 2) >> level) & 0x01f
         if level > 5:
-            child = self._pop_tail(level-5, node.array[sub])
+            child = self._pop_tail(level - 5, node.array[sub])
             if child is None and sub == 0:
                 return None
             r = self.__class__._Node(node.array[:])

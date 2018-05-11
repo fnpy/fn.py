@@ -2,7 +2,7 @@ import operator
 import random
 import re
 import string
-from itertools import count, repeat
+from itertools import chain, count, repeat
 from sys import version_info
 
 from .func import F
@@ -27,10 +27,10 @@ def fmap(f, format):
             return self.__class__(
                 (f, self, other),
                 fmt.replace("other", other._format),
-                dict(
-                    list(self._format_args.items()) +
-                    list(other._format_args.items())
-                ),
+                dict(chain(
+                    self._format_args.items(),
+                    other._format_args.items()
+                )),
                 self._arity + other._arity
             )
         else:
@@ -97,10 +97,10 @@ class _Callable(object):
             return self.__class__(
                 (operator.getitem, self, k),
                 "%s[%s]" % (self._format, k._format),
-                dict(
-                    list(self._format_args.items()) +
-                    list(k._format_args.items())
-                ),
+                dict(chain(
+                    self._format_args.items(),
+                    k._format_args.items()
+                )),
                 self._arity + k._arity
             )
         item_name = _random_name()

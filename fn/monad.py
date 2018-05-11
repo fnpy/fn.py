@@ -48,9 +48,9 @@ You need to evaluate "request type" using at least on attribute:
     from fn.monad import Option
 
     request = dict(url="face.png", mimetype="PNG")
-    tp = Option(request.get("type", None)) \ # check "type" key first
-      .or_call(from_mimetype, request) \ # or.. check "mimetype" key
-      .or_call(from_extension, request) \ # or... get "url" and check extension
+    tp = Option(request.get("type", None)) \\  # check "type" key first
+      .or_call(from_mimetype, request) \\  # or.. check "mimetype" key
+      .or_call(from_extension, request) \\  # or... check "url" extension
       .get_or("application/undefined")
 
 """

@@ -187,7 +187,7 @@ def powerset(iterable):
     http://docs.python.org/3.4/library/itertools.html#itertools-recipes
     """
     s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+    return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 
 def pairwise(iterable):
