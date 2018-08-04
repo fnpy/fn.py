@@ -3,7 +3,7 @@
 from collections import namedtuple
 
 
-class tco(object):
+def tco(func):
     """Provides a trampoline for functions that need one.
 
     Such function should return one of:
@@ -25,15 +25,10 @@ class tco(object):
     http://mail.python.org/pipermail/python-ideas/2009-May/004486.html
     """
 
-    __slots__ = "func",
-
-    def __init__(self, func):
-        self.func = func
-
-    def __call__(self, *args, **kwargs):
-        action = self
+    def wrapped(*args, **kwargs):
+        action = func
         while True:
-            result = action.func(*args, **kwargs)
+            result = action(*args, **kwargs)
             # return final result
             if not result[0]:
                 return result[1]
@@ -46,7 +41,7 @@ class tco(object):
             if callable(act):
                 action = act
             kwargs = result[2] if len(result) > 2 else {}
-
+    return wrapped
 
 class stackless(object):
     """Provides a "stackless" (constant Python stack space) recursion
