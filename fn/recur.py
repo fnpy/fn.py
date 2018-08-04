@@ -1,6 +1,7 @@
 """Provides decorators to deal with tail calls in recursive functions."""
 
 from collections import namedtuple
+import functools
 
 
 def tco(func):
@@ -25,10 +26,11 @@ def tco(func):
     http://mail.python.org/pipermail/python-ideas/2009-May/004486.html
     """
 
-    def wrapped(*args, **kwargs):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
         action = func
         while True:
-            result = action(*args, **kwargs)
+            result = action.__wrapped__(*args, **kwargs)
             # return final result
             if not result[0]:
                 return result[1]
@@ -41,7 +43,13 @@ def tco(func):
             if callable(act):
                 action = act
             kwargs = result[2] if len(result) > 2 else {}
-    return wrapped
+
+    # @wraps does not set __wrapped__ in py2
+    wrapper.__wrapped__ = func
+    # make sure that the wrapper sees changes to func
+    func = wrapper
+    return wrapper
+
 
 class stackless(object):
     """Provides a "stackless" (constant Python stack space) recursion
