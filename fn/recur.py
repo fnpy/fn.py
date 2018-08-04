@@ -28,7 +28,7 @@ def tco(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        action = func
+        action = wrapper
         while True:
             result = action.__wrapped__(*args, **kwargs)
             # return final result
@@ -46,8 +46,6 @@ def tco(func):
 
     # @wraps does not set __wrapped__ in py2
     wrapper.__wrapped__ = func
-    # make sure that the wrapper sees changes to func
-    func = wrapper
     return wrapper
 
 
