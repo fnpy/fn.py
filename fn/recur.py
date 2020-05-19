@@ -1,9 +1,10 @@
 """Provides decorators to deal with tail calls in recursive functions."""
 
 from collections import namedtuple
+import functools
 
 
-class tco(object):
+def tco(func):
     """Provides a trampoline for functions that need one.
 
     Such function should return one of:
@@ -25,15 +26,11 @@ class tco(object):
     http://mail.python.org/pipermail/python-ideas/2009-May/004486.html
     """
 
-    __slots__ = "func",
-
-    def __init__(self, func):
-        self.func = func
-
-    def __call__(self, *args, **kwargs):
-        action = self
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        action = wrapper
         while True:
-            result = action.func(*args, **kwargs)
+            result = action.__wrapped__(*args, **kwargs)
             # return final result
             if not result[0]:
                 return result[1]
@@ -46,6 +43,10 @@ class tco(object):
             if callable(act):
                 action = act
             kwargs = result[2] if len(result) > 2 else {}
+
+    # @wraps does not set __wrapped__ in py2
+    wrapper.__wrapped__ = func
+    return wrapper
 
 
 class stackless(object):
