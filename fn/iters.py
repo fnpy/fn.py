@@ -1,4 +1,5 @@
 from collections import deque
+from collections.abc import Iterable
 from functools import partial
 from itertools import (chain, combinations, cycle, dropwhile, islice, repeat,
                        starmap, takewhile, tee)
