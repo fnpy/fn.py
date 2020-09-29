@@ -102,6 +102,10 @@ class Option(object):
     def or_call(self, callback, *args, **kwargs):
         raise NotImplementedError()
 
+    @property
+    def optional(self):
+        raise NotImplementedError()
+
 
 class Full(Option):
     """Represents value that is ready for further computations"""
@@ -136,6 +140,10 @@ class Full(Option):
 
     def or_call(self, callback, *args, **kwargs):
         return self
+
+    @property
+    def optional(self):
+        return self.x
 
     def __str__(self):
         return "Full(%s)" % self.x
@@ -176,6 +184,10 @@ class Empty(Option):
 
     def or_call(self, callback, *args, **kwargs):
         return Option(callback(*args, **kwargs))
+
+    @property
+    def optional(self):
+        return None
 
     def __str__(self):
         return "Empty()"
